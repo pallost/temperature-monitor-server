@@ -1,4 +1,4 @@
-package guestbook
+package main
 
 import (
     "html/template"
@@ -73,55 +73,63 @@ var chartTemplate = template.Must(template.New("book").Parse(`
 <script>
     /*These lines are all chart setup.  Pick and choose which chart features you want to utilize. */
     nv.addGraph(function() {
-        var chart = nv.models.lineChart()
-            .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
-            .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
-            .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
-            .showYAxis(true)        //Show the y-axis
-            .showXAxis(true)        //Show the x-axis
-        ;
+      var chart = nv.models.multiChart()
+        .margin({top: 30, right: 60, bottom: 50, left: 70})
+        .color(d3.scale.category10().range())
+        .useInteractiveGuideline(true)
+        .showLegend(true);
 
-        chart.xAxis
-            .axisLabel('Time (ms)')
-            .tickFormat(function(d) {
-                return d3.time.format('%m-%d %H:%M')(new Date(d))
-            })
-            .showMaxMin(false);
+      chart.xAxis
+        .axisLabel('Time (ms)')
+        .tickFormat(function(d) {
+          return d3.time.format('%m-%d %H:%M')(new Date(d))
+        })
+        .showMaxMin(false);
 
-        chart.yAxis     //Chart y-axis settings
-            .axisLabel('C / %')
-            .tickFormat(d3.format('.02f'));
+      chart.yAxis1
+        .axisLabel('C')
+        .tickFormat(d3.format('.02f'));
 
-        /* Done setting the chart up? Time to render it!*/
-        var myData = getData();   //You need data...
+      chart.yAxis2
+        .axisLabel('%')
+        .tickFormat(d3.format('.02f'));
 
-        d3.select('#chart svg')    //Select the <svg> element you want to render the chart in.
-            .datum(myData)         //Populate the <svg> element with chart data...
-            .call(chart);          //Finally, render the chart!
 
-        //Update the chart when window resizes.
-        nv.utils.windowResize(function() { chart.update() });
-        return chart;
+      var myData = getData();
+
+      d3.select('#chart svg')
+        .datum(myData)
+        .call(chart);
+
+      nv.utils.windowResize(function() { chart.update() });
+      return chart;
     });
+
     /**************************************
      * Simple test data generator
      */
     function getData() {
         var data = JSON.parse({{.}})
-        data = _.sortBy(data, "Date")
+        data = _.sortBy(data, "Date");
+        data = _.filter(data, function (meas) {
+          return meas.Temperature > 0 && meas.Humidity > 0;
+        });
 
-        //Line chart data should be sent as an array of series objects.
         return [
-            {
-                values: _.map(data, function(m) {return {x: m.Date, y: m.Temperature}}),
-                key: 'Temperature', //key  - the name of the series.
-                color: '#ff7f0e'  //color - optional: choose your own line color.
-            },
-            {
-                values: _.map(data, function(m) {return {x: m.Date, y: m.Humidity}}),
-                key: 'Humidity',
-                color: '#2ca02c'
-            }
+          {
+            values: _.map(data, function(m) {return {x: m.Date, y: m.Temperature}}),
+            yAxis: 1,
+            type: "line",
+            key: 'Temperature',
+            color: '#ff7f0e'
+          },
+          {
+            values: _.map(data, function(m) {return {x: m.Date, y: m.Humidity}}),
+            yAxis: 2,
+            type: "line",
+            key: 'Humidity',
+            color: '#2ca02c'
+          }
         ];
     }
 </script>
