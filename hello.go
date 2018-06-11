@@ -27,7 +27,7 @@ func measurementKey(c appengine.Context) *datastore.Key {
 func showMeasurements(resp http.ResponseWriter, req *http.Request) {
     ctx := appengine.NewContext(req)
 
-    var limit = 500
+    var limit = 1000
     // Ancestor queries, as shown here, are strongly consistent with the High
     // Replication Datastore. Queries that span entity groups are eventually
     // consistent. If we omitted the .Ancestor from this query there would be
@@ -69,6 +69,7 @@ var chartTemplate = template.Must(template.New("book").Parse(`
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 
 <script>
     /*These lines are all chart setup.  Pick and choose which chart features you want to utilize. */
@@ -112,7 +113,9 @@ var chartTemplate = template.Must(template.New("book").Parse(`
         var data = JSON.parse({{.}})
         data = _.sortBy(data, "Date");
         data = _.filter(data, function (meas) {
-          return meas.Temperature > 0 && meas.Humidity > 0;
+          return meas.Temperature > 0 &&
+                 meas.Humidity > 0 &&
+                 moment(meas.Date).isAfter(moment().subtract(14, 'days'));
         });
 
         return [
