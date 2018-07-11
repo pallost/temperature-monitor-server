@@ -27,7 +27,7 @@ func measurementKey(c appengine.Context) *datastore.Key {
 func showMeasurements(resp http.ResponseWriter, req *http.Request) {
     ctx := appengine.NewContext(req)
 
-    var limit = 1000
+    var limit = 500
     // Ancestor queries, as shown here, are strongly consistent with the High
     // Replication Datastore. Queries that span entity groups are eventually
     // consistent. If we omitted the .Ancestor from this query there would be
@@ -70,6 +70,10 @@ var chartTemplate = template.Must(template.New("book").Parse(`
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+
+window.setInterval(function() {
+  window.location.reload();
+}, 20*60*1000);
 
 <script>
     /*These lines are all chart setup.  Pick and choose which chart features you want to utilize. */
