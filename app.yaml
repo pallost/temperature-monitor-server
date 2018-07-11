@@ -1,3 +1,4 @@
+service: temperature-monitor-server
 runtime: go
 api_version: go1
 
