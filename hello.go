@@ -8,6 +8,9 @@ import (
 
 	"appengine"
 	"appengine/datastore"
+	"net/url"
+	"log"
+	"io/ioutil"
 )
 
 type Measurement struct {
@@ -24,6 +27,32 @@ func init() {
 
 func measurementKey(c appengine.Context) *datastore.Key {
 	return datastore.NewKey(c, "Measurement", "default_measurement", 0, nil)
+}
+
+func getCurrentTemperature() float32 {
+	forecaUrl := "https://www.foreca.com/lv"
+	tampereId := "100634963"
+
+	response, err := http.PostForm(forecaUrl, url.Values{
+		"id": {tampereId},
+	})
+
+	if err != nil {
+		log.Println(err)
+		return -1
+	}
+
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		log.Println(err)
+		return -1
+	}
+
+	log.Println(string(body))
+
+	return 1
 }
 
 func getMeasurements(resp http.ResponseWriter, req *http.Request) {
@@ -48,6 +77,8 @@ func getMeasurements(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-Type", "application/json")
 	resp.WriteHeader(http.StatusCreated)
 	json.NewEncoder(resp).Encode(measurements)
+
+	getCurrentTemperature()
 }
 
 func showMeasurements(resp http.ResponseWriter, req *http.Request) {
@@ -117,9 +148,13 @@ var chartTemplate = template.Must(template.New("book").Parse(`
     d3.json("/get", function(err, data) {
         data = _.sortBy(data, "Date");
         data = _.filter(data, function (meas) {
-          return meas.Temperature > 0 &&
-                 meas.Humidity > 0 &&
-                 moment(meas.Date).isAfter(moment().subtract(14, 'days'));
+          return true;
+          // return meas.Temperature > 0 &&
+          //       meas.Humidity > 0 &&
+			//	 meas.Temperature < 50 &&
+		//		 meas.Humidity < 100 &&
+		//		 meas.Humidity > meas.Temperature; 
+                 // moment(meas.Date).isAfter(moment().subtract(14, 'days'));
         });
 
         var renderData = [
