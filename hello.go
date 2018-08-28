@@ -22,6 +22,7 @@ type Measurement struct {
 func init() {
 	http.HandleFunc("/", showMeasurements)
 	http.HandleFunc("/get", getMeasurements)
+	http.HandleFunc("/latest", latestMeasurements)
 	http.HandleFunc("/add", addMeasurement)
 }
 
@@ -53,6 +54,24 @@ func getCurrentTemperature() float32 {
 	log.Println(string(body))
 
 	return 1
+}
+
+func latestMeasurements(resp http.ResponseWriter, req *http.Request) {
+	ctx := appengine.NewContext(req)
+
+	q := datastore.NewQuery("Measurement").Ancestor(measurementKey(ctx)).Order("-Date").Limit(1)
+
+	measurements := make([]Measurement, 0, 1)
+	if _, err := q.GetAll(ctx, &measurements); err != nil {
+		http.Error(resp, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp.Header().Set("Content-Type", "application/json")
+	resp.WriteHeader(http.StatusCreated)
+	json.NewEncoder(resp).Encode(measurements)
+
+	getCurrentTemperature()
 }
 
 func getMeasurements(resp http.ResponseWriter, req *http.Request) {
